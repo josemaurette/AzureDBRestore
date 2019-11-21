@@ -254,7 +254,7 @@ function Get-BackupBlobContents {
         $BlobPath
     )
  
-    $sqlsvr = New-Object -TypeName  Microsoft.SQLServer.Management.Smo.Server($SQLServer)
+    $sqlsvr = New-Object -TypeName  Microsoft.SQLServer.Management.Smo.Server($ServerName)
     $restore = New-Object -TypeName Microsoft.SqlServer.Management.Smo.Restore
     $devicetype = [Microsoft.SqlServer.Management.Smo.DeviceType]::URL
  

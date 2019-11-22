@@ -1,5 +1,5 @@
 # AzureDBRestore
-Set of functions to allow restoring databases directly from Azure Blob Storage. This functionality does not require access to MSDB since all information required to restore the database is extracted from the blobs. It also allows stiped backups and point in time recovery 
+Set of functions to allow restoring databases directly from Azure Blob Storage. This functionality does not require access to MSDB since all information required to restore the database is extracted from the blobs. It also allows striped backups and point in time recovery 
 
 ## How to run it
 ```powershell

@@ -1,4 +1,4 @@
-﻿<#
+<#
     .SYNOPSIS
         Gets the Shared Access Signature for the access policy in the specified container.
 
@@ -364,7 +364,11 @@ function Restore-DatabasesFromBlobStorage {
 
         [Parameter(Mandatory = $false)]
         [System.String]
-        $GoBackTime
+        $GoBackTime,
+
+        [Parameter(Mandatory = $false)]
+        [System.String]
+        $AppendName
 
  
     )
@@ -388,7 +392,6 @@ function Restore-DatabasesFromBlobStorage {
         -ContainerName $ContainerName
     
     Set-SQLServerBackupCredential -ServerInstance $ServerName -Credential $ContainerUri -Secret $secret
-
         
     foreach ($database in $DatabasesToInclude) {
         $backupBlobs = @()
@@ -441,20 +444,24 @@ function Restore-DatabasesFromBlobStorage {
         
             foreach ($dbfile in $dbfiles) {
                 $DbFileName = $dbfile.PhysicalName | Split-Path -Leaf
+                $FileName= [io.path]::GetFileNameWithoutExtension("$DbFileName")
+                $Extention= [io.path]::GetExtension("$DbFileName")
+                $DbFileName = [System.String]::Concat($FileName,$AppendName,$Extention)
+
                 if ($dbfile.Type -eq 'L') {
-                    $newfile = Join-Path -Path $LogFolder -ChildPath $DbFileName
+                    $newfile =[IO.Path]::Combine($LogFolder, $DbFileName)
                 }
                 else {
-                    $newfile = Join-Path -Path $DataFolder -ChildPath  $DbFileName
+                    $newfile =[IO.Path]::Combine($DataFolder, $DbFileName)
                 }
-                $relocate += New-Object Microsoft.SqlServer.Management.Smo.RelocateFile ($dbfile.LogicalName, $newfile)
+                $relocate += New-Object Microsoft.SqlServer.Management.Smo.RelocateFile ($dbfile.LogicalName, $newfile.ToString())
             }
         
             if ($ScriptOnly -eq $true)
             {
                 Restore-SqlDatabase `
                 -ServerInstance $ServerName `
-                -Database $database `
+                -Database "$database$AppendName" `
                 -RelocateFile $relocate `
                 -RestoreAction 'Database' `
                 -BackupFile $RestoreDatabase `
@@ -465,7 +472,7 @@ function Restore-DatabasesFromBlobStorage {
             {
             Restore-SqlDatabase `
                 -ServerInstance $ServerName `
-                -Database $database `
+                -Database "$database$AppendName" `
                 -RelocateFile $relocate `
                 -RestoreAction 'Database' `
                 -BackupFile $RestoreDatabase `
@@ -478,7 +485,7 @@ function Restore-DatabasesFromBlobStorage {
             {
                 Restore-SqlDatabase `
                     -ServerInstance $ServerName `
-                    -Database $database `
+                    -Database "$database$AppendName" `
                     -RestoreAction 'Log' `
                     -BackupFile $urlPath `
                     -NoRecovery `
@@ -488,7 +495,7 @@ function Restore-DatabasesFromBlobStorage {
             {
                     Restore-SqlDatabase `
                     -ServerInstance $ServerName `
-                    -Database $database `
+                    -Database "$database$AppendName" `
                     -RestoreAction 'Log' `
                     -BackupFile $urlPath `
                     -NoRecovery
@@ -499,7 +506,7 @@ function Restore-DatabasesFromBlobStorage {
             
             if ($NoRecovery -eq $false) 
             {
-                $RestoreWithRecoveryQuery= "RESTORE DATABASE $database WITH RECOVERY"
+                $RestoreWithRecoveryQuery= "RESTORE DATABASE $database$AppendName WITH RECOVERY"
                 if ($scriptOnly -eq $true)
                 {
                    Write-Output $RestoreWithRecoveryQuery
@@ -513,8 +520,6 @@ function Restore-DatabasesFromBlobStorage {
         }
     }
 }
-
-
 
 
 
